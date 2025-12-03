@@ -1,74 +1,64 @@
+import 'dart:async';
 import 'package:bamtol_market_app/src/common/components/app_font.dart';
-import 'package:bamtol_market_app/src/common/components/getx_listener.dart';
 import 'package:bamtol_market_app/src/common/controller/authentication_controller.dart';
-import 'package:bamtol_market_app/src/common/controller/data_load_controller.dart';
-import 'package:bamtol_market_app/src/common/enum/authentication_status.dart';
-import 'package:bamtol_market_app/src/splash/controller/splash_controller.dart';
-import 'package:bamtol_market_app/src/splash/enum/step_type.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SplashPage extends GetView<SplashController> {
+class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
   @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAppStatus();
+  }
+
+  Future<void> _checkAppStatus() async {
+    // 1. 가짜 데이터 로딩 시간 (1.5초 대기) - 로고 보여주기용
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // 2. 로그인 상태 확인
+    var authController = Get.find<AuthenticationController>();
+    
+    // 3. 앱 최초 실행 여부 확인 (SharedPreferences)
+    // main.dart에서 주입이 안되어있을 수도 있으니 안전하게 호출
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isInitStarted = prefs.getBool('isInitStarted') ?? true;
+
+    if (authController.userModel.value != null) {
+      // 이미 로그인 된 유저라면 홈으로
+      Get.offAllNamed('/home');
+    } else {
+      // 로그인 안 된 상태라면
+      if (isInitStarted) {
+        // 앱을 처음 켰으면 (또는 로그아웃 후 초기화면 보고 싶을 때) -> InitStartPage
+        // 하지만 라우트 설정상 InitStartPage가 '/' 라면 그냥 여기서 이동 처리
+        // 보통 Splash -> Login 또는 Home으로 나뉩니다.
+        
+        // 여기서는 로그인 페이지로 이동시킵니다.
+        Get.offAllNamed('/login');
+      } else {
+         Get.offAllNamed('/login');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: GetxListener<AuthenticationStatus>(
-          listen: (AuthenticationStatus status) async {
-            switch (status) {
-              case AuthenticationStatus.authentication:
-                Get.offNamed('/home');
-                break;
-              case AuthenticationStatus.unAuthenticated:
-                var userModel =
-                    Get.find<AuthenticationController>().userModel.value;
-                await Get.offNamed('/signup/${userModel.uid}');
-                Get.find<AuthenticationController>().reload();
-                break;
-              case AuthenticationStatus.unknown:
-                Get.offNamed('/login');
-                break;
-              case AuthenticationStatus.init:
-                break;
-            }
-          },
-          stream: Get.find<AuthenticationController>().status,
-          child: GetxListener<bool>(
-            listen: (bool value) {
-              if (value) {
-                controller.loadStep(StepType.authCheck);
-              }
-            },
-            stream: Get.find<DataLoadController>().isDataLoad,
-            child: GetxListener<StepType>(
-              initCall: () {
-                controller.loadStep(StepType.dataLoad);
-              },
-              listen: (StepType? value) {
-                if (value == null) return;
-                switch (value) {
-                  case StepType.init:
-                  case StepType.dataLoad:
-                    Get.find<DataLoadController>().loadData();
-                    break;
-                  case StepType.authCheck:
-                    Get.find<AuthenticationController>().authCheck();
-                    break;
-                }
-              },
-              stream: controller.loadStep,
-              child: const _SplashView(),
-            ),
-          ),
-        ),
-      ),
+    // 복잡한 Listener 제거하고 UI만 표시
+    return const Scaffold(
+      body: _SplashView(),
     );
   }
 }
 
-class _SplashView extends GetView<SplashController> {
+class _SplashView extends StatelessWidget {
   const _SplashView({super.key});
 
   @override
@@ -103,20 +93,17 @@ class _SplashView extends GetView<SplashController> {
             ],
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 200,
           child: Column(
             children: [
-              Obx(
-                () {
-                  return Text(
-                    '${controller.loadStep.value.name}중 입니다.',
-                    style: const TextStyle(color: Colors.white),
-                  );
-                },
+              // 상태 메시지 단순화
+              Text(
+                '데이터를 불러오는 중입니다...',
+                style: TextStyle(color: Colors.white),
               ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(
+              SizedBox(height: 20),
+              CircularProgressIndicator(
                   strokeWidth: 1, color: Colors.white)
             ],
           ),

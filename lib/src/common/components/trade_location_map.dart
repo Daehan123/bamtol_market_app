@@ -103,27 +103,31 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                   if (location != null) {
                     myLocation = location!;
                   }
-                  return FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      center: myLocation,
-                      interactiveFlags:
-                          InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                      onPositionChanged: (position, hasGesture) {
-                        if (hasGesture) {
-                          setState(() {
-                            lable = '';
-                          });
-                        }
-                      },
-                    ),
+                  // Stack을 사용하여 지도 위에 UI 요소 배치
+                  return Stack(
                     children: [
-                      TileLayer(
-                        urlTemplate:
-                            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: myLocation, // v7: center -> initialCenter
+                          initialZoom: 15.0, // 줌 레벨 추가 권장
+                          onPositionChanged: (position, hasGesture) {
+                            if (hasGesture) {
+                              setState(() {
+                                lable = '';
+                              });
+                            }
+                          },
+                          // v7: interactionOptions 사용 가능 (기본값 사용해도 됨)
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate:
+                                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                          ),
+                        ],
                       ),
-                    ],
-                    nonRotatedChildren: [
+                      // 지도 중앙 마커 및 라벨 (nonRotatedChildren 대체)
                       if (lable != '')
                         Center(
                           child: Column(
@@ -134,7 +138,7 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                                     vertical: 7, horizontal: 15),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(7),
-                                  color: Color.fromARGB(255, 208, 208, 208),
+                                  color: const Color.fromARGB(255, 208, 208, 208),
                                 ),
                                 child: AppFont(
                                   lable,
@@ -169,7 +173,7 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                                   );
                                   Get.back(result: {
                                     'label': result,
-                                    'location': _mapController.center
+                                    'location': _mapController.camera.center // v7: camera.center
                                   });
                                 },
                                 child: const AppFont(
@@ -200,7 +204,7 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
         child: FloatingActionButton(
           onPressed: () {},
           backgroundColor: const Color(0xff212123),
-          child: Icon(Icons.location_searching),
+          child: const Icon(Icons.location_searching),
         ),
       ),
     );

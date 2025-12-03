@@ -1,71 +1,32 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:bamtol_market_app/src/user/model/user_model.dart';
-import 'package:crypto/crypto.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthenticationRepository extends GetxService {
-  final FirebaseAuth _firebaseAuth;
+  final Rx<UserModel?> _user = Rx<UserModel?>(null);
 
-  AuthenticationRepository(this._firebaseAuth);
+  AuthenticationRepository();
 
-  Stream<UserModel?> get user {
-    return _firebaseAuth.authStateChanges().map<UserModel?>((user) {
-      return user == null ? null : UserModel(uid: user.uid);
-    });
-  }
+  Stream<UserModel?> get user => _user.stream;
 
   Future<void> signInWithGoogle() async {
-    final googleUser = await GoogleSignIn().signIn();
-    final googleAuth = await googleUser?.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
-
-    await _firebaseAuth.signInWithCredential(credential);
-  }
-
-  String generateNonce([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
-        .join();
-  }
-
-  String sha256ofString(String input) {
-    final bytes = utf8.encode(input);
-    final digest = sha256.convert(bytes);
-    return digest.toString();
+    _fakeLogin('google_user_uid');
   }
 
   Future<void> signInWithApple() async {
-    final rawNonce = generateNonce();
-    final nonce = sha256ofString(rawNonce);
+    _fakeLogin('apple_user_uid');
+  }
 
-    final appleCredential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-      nonce: nonce,
+  void _fakeLogin(String uid) {
+    // [수정] UserModel 생성 시 필수값(nickname)을 넣어줘야 오류가 안 납니다.
+    // 여기는 "로그인 시늉"만 하는 곳이므로 임시 값을 넣어줍니다.
+    _user.value = UserModel(
+      uid: uid,
+      nickname: 'Guest', // 임시 닉네임
+      temperature: 36.5,
     );
-
-    final oauthCredential = OAuthProvider("apple.com").credential(
-      idToken: appleCredential.identityToken,
-      rawNonce: rawNonce,
-    );
-
-    await _firebaseAuth.signInWithCredential(oauthCredential);
   }
 
   Future<void> logout() async {
-    await _firebaseAuth.signOut();
+    _user.value = null;
   }
 }

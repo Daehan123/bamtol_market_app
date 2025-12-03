@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bamtol_market_app/src/common/components/app_font.dart';
 import 'package:bamtol_market_app/src/common/controller/common_layout_controller.dart';
 import 'package:bamtol_market_app/src/common/enum/market_enum.dart';
@@ -8,15 +10,20 @@ import 'package:bamtol_market_app/src/user/model/user_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:photo_manager/photo_manager.dart';
+import 'package:image_picker/image_picker.dart'; // [변경] image_picker 사용
 
 class ProductWriteController extends GetxController {
   final UserModel owner;
   final Rx<Product> product = const Product().obs;
   final ProductRepository _productRepository;
   final CloudFirebaseRepository _cloudFirebaseRepository;
+  
   RxBool isPossibleSubmit = false.obs;
-  RxList<AssetEntity> selectedImages = <AssetEntity>[].obs;
+  
+  // [변경] AssetEntity -> XFile로 변경 (파일 자체를 다룸)
+  RxList<XFile> selectedImages = <XFile>[].obs;
+  final ImagePicker _picker = ImagePicker(); // 이미지 피커 인스턴스
+
   ProductWriteController(
     this.owner,
     this._productRepository,
@@ -29,20 +36,34 @@ class ProductWriteController extends GetxController {
     product.stream.listen((event) {
       _isValidSubmitPossible();
     });
+    ever(selectedImages, (_) => _isValidSubmitPossible());
   }
 
   _isValidSubmitPossible() {
     if (selectedImages.isNotEmpty &&
         (product.value.productPrice ?? 0) >= 0 &&
-        product.value.title != '') {
+        product.value.title != null && 
+        product.value.title!.isNotEmpty) {
       isPossibleSubmit(true);
     } else {
       isPossibleSubmit(false);
     }
   }
 
-  changeSelectedImages(List<AssetEntity>? images) {
-    selectedImages(images);
+  // [변경] 갤러리에서 사진 가져오기 함수
+  Future<void> pickImages() async {
+    // 갤러리에서 여러 장 선택
+    final List<XFile> images = await _picker.pickMultiImage();
+    
+    if (images.isNotEmpty) {
+      // 기존 리스트에 추가 (최대 10장 제한 로직 추가 가능)
+      selectedImages.addAll(images);
+      
+      if(selectedImages.length > 10) {
+        Get.snackbar('알림', '사진은 최대 10장까지만 선택 가능합니다.');
+        selectedImages.assignAll(selectedImages.sublist(0, 10));
+      }
+    }
   }
 
   deleteImage(int index) {
@@ -58,6 +79,10 @@ class ProductWriteController extends GetxController {
   }
 
   changePrice(String price) {
+    if (price.isEmpty) {
+      product(product.value.copyWith(productPrice: 0));
+      return;
+    }
     if (!RegExp(r'^[0-9]+$').hasMatch(price)) return;
     product(product.value.copyWith(
         productPrice: int.parse(price), isFree: int.parse(price) == 0));
@@ -85,13 +110,14 @@ class ProductWriteController extends GetxController {
         .copyWith(wantTradeLocationLabel: '', wantTradeLocation: null));
   }
 
-  Future<List<String>> uploadImages(List<AssetEntity> images) async {
+  Future<List<String>> uploadImages(List<XFile> images) async {
     List<String> imageUrls = [];
     for (var image in images) {
-      var file = await image.file;
-      if (file == null) return [];
+      // [변경] XFile -> File 변환
+      var file = File(image.path);
+      
       var downloadUrl =
-          await _cloudFirebaseRepository.uploadFile(owner.uid!, file);
+          await _cloudFirebaseRepository.uploadFile(owner.uid, file);
       imageUrls.add(downloadUrl);
     }
     return imageUrls;
@@ -100,14 +126,18 @@ class ProductWriteController extends GetxController {
   submit() async {
     CommonLayoutController.to.loading(true);
     var downloadUrls = await uploadImages(selectedImages);
+    
     product(product.value.copyWith(
       owner: owner,
       imageUrls: downloadUrls,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     ));
+    
     var savedId = await _productRepository.saveProduct(product.value.toMap());
+    
     CommonLayoutController.to.loading(false);
+    
     if (savedId != null) {
       await showDialog(
         context: Get.context!,

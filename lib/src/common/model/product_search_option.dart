@@ -1,20 +1,20 @@
 import 'package:bamtol_market_app/src/common/enum/market_enum.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class ProductSearchOption extends Equatable {
-  QueryDocumentSnapshot? lastItem;
-  List<ProductStatusType>? status;
-  String? ownerId;
+  // Firestore 객체 대신 String ID나 int Index 사용
+  final dynamic lastItem; 
+  final List<ProductStatusType>? status;
+  final String? ownerId;
 
-  ProductSearchOption({
+  const ProductSearchOption({
     this.lastItem,
     this.status,
     this.ownerId,
   });
 
   ProductSearchOption copyWith({
-    QueryDocumentSnapshot? lastItem,
+    dynamic lastItem,
     String? ownerId,
     List<ProductStatusType>? status,
   }) {
@@ -25,18 +25,7 @@ class ProductSearchOption extends Equatable {
     );
   }
 
-  Query<Object?> toQuery(CollectionReference<Object?> collection) {
-    Query<Object?> query = collection;
-    if (status != null && status!.isNotEmpty) {
-      query =
-          query.where('status', whereIn: status!.map((e) => e.value).toList());
-    }
-    if (ownerId != null) {
-      query = query.where('owner.uid', isEqualTo: ownerId);
-    }
-    query = query.orderBy('createdAt', descending: true);
-    return query;
-  }
+  // Firestore 쿼리 생성 로직 제거 (Repository에서 필터링 처리)
 
   @override
   List<Object?> get props => [

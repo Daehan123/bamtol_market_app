@@ -1,44 +1,32 @@
-import 'package:bamtol_market_app/src/common/enum/authentication_status.dart';
 import 'package:bamtol_market_app/src/user/model/user_model.dart';
 import 'package:bamtol_market_app/src/user/repository/authentication_repository.dart';
 import 'package:bamtol_market_app/src/user/repository/user_repository.dart';
 import 'package:get/get.dart';
 
 class AuthenticationController extends GetxController {
+  final AuthenticationRepository _authenticationRepository;
+  final UserRepository _userRepository;
+
+  // 로그인된 유저 정보를 담는 변수 (null이면 비로그인 상태)
+  Rx<UserModel?> userModel = Rx<UserModel?>(null);
+
   AuthenticationController(
       this._authenticationRepository, this._userRepository);
 
-  final AuthenticationRepository _authenticationRepository;
-  final UserRepository _userRepository;
-  Rx<AuthenticationStatus> status = AuthenticationStatus.init.obs;
-  Rx<UserModel> userModel = const UserModel().obs;
-
-  void authCheck() async {
-    _authenticationRepository.user.listen((user) {
-      _userStateChangedEvent(user);
-    });
+  @override
+  void onInit() {
+    super.onInit();
   }
 
-  void reload() {
-    _userStateChangedEvent(userModel.value);
+  // [수정] 복잡한 스트림 리스너 제거. 단순 유저 저장용 함수 추가.
+  void manualLogin(UserModel newUser) {
+    userModel.value = newUser;
   }
 
-  void _userStateChangedEvent(UserModel? user) async {
-    if (user == null) {
-      status(AuthenticationStatus.unknown);
-    } else {
-      var result = await _userRepository.findUserOne(user.uid!);
-      if (result == null) {
-        userModel(user);
-        status(AuthenticationStatus.unAuthenticated);
-      } else {
-        status(AuthenticationStatus.authentication);
-        userModel(result);
-      }
-    }
-  }
-
-  void logout() async {
+  Future<void> logout() async {
+    // 저장소 레벨 로그아웃 (필요시)
     await _authenticationRepository.logout();
+    // 상태 비우기 -> 앱이 이를 감지하고 로그인/시작 화면으로 이동
+    userModel.value = null;
   }
 }

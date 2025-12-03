@@ -19,6 +19,7 @@ class Product extends Equatable {
   final String? wantTradeLocationLabel;
   final ProductCategoryType? categoryType;
   final List<String>? likers;
+
   const Product({
     this.docId,
     this.title,
@@ -47,14 +48,13 @@ class Product extends Equatable {
       'productPrice': productPrice,
       'isFree': isFree,
       'imageUrls': imageUrls,
-      'createdAt': createdAt,
+      'createdAt': createdAt?.toIso8601String(), // String으로 변환
       'viewCount': viewCount,
-      'updatedAt': DateTime.now(),
+      'updatedAt': DateTime.now().toIso8601String(), // String으로 변환
       'status': status!.value,
-      'wantTradeLocation': [
-        wantTradeLocation?.latitude,
-        wantTradeLocation?.longitude
-      ],
+      'wantTradeLocation': wantTradeLocation != null
+          ? [wantTradeLocation!.latitude, wantTradeLocation!.longitude]
+          : null,
       'wantTradeLocationLabel': wantTradeLocationLabel,
       'categoryType': categoryType?.code,
       'likers': likers,
@@ -68,15 +68,28 @@ class Product extends Equatable {
       description: json['description'],
       productPrice: json['productPrice'],
       isFree: json['isFree'],
-      imageUrls: json['imageUrls'].map<String>((e) => e as String).toList(),
+      imageUrls: json['imageUrls'] == null
+          ? []
+          : (json['imageUrls'] as List).map<String>((e) => e as String).toList(),
+      
+      // [수정] Firestore Timestamp(.toDate()) 제거 -> String 파싱으로 변경
       createdAt: json['createdAt'] == null
           ? DateTime.now()
-          : json['createdAt'].toDate(),
+          : (json['createdAt'] is String 
+              ? DateTime.parse(json['createdAt']) 
+              : DateTime.now()), // 혹시 모를 타입 불일치 대비
+              
       updatedAt: json['updatedAt'] == null
           ? DateTime.now()
-          : json['updatedAt'].toDate(),
-      viewCount: json['viewCount'].toInt(),
-      owner: UserModel.fromJson(json['owner']),
+          : (json['updatedAt'] is String 
+              ? DateTime.parse(json['updatedAt']) 
+              : DateTime.now()),
+              
+      viewCount: json['viewCount']?.toInt() ?? 0,
+      
+      // owner가 null일 경우 대비
+      owner: json['owner'] == null ? null : UserModel.fromJson(json['owner']),
+      
       status: json['status'] == null
           ? ProductStatusType.sale
           : ProductStatusType.values.byName(json['status']),
@@ -85,8 +98,7 @@ class Product extends Equatable {
           : ProductCategoryType.findByCode(json['categoryType']),
       wantTradeLocationLabel: json['wantTradeLocationLabel'],
       wantTradeLocation: json['wantTradeLocation'] != null &&
-              json['wantTradeLocation'][0] != null &&
-              json['wantTradeLocation'][1] != null
+              (json['wantTradeLocation'] as List).length >= 2
           ? LatLng(json['wantTradeLocation'][0], json['wantTradeLocation'][1])
           : null,
       likers: json['likers']?.map<String>((e) => e as String).toList(),
@@ -131,6 +143,7 @@ class Product extends Equatable {
 
   @override
   List<Object?> get props => [
+        docId,
         title,
         owner,
         description,

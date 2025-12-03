@@ -1,19 +1,16 @@
 import 'dart:io';
-
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
-import 'package:uuid/uuid.dart';
 
 class CloudFirebaseRepository extends GetxService {
-  final Reference storageRef;
-  CloudFirebaseRepository(FirebaseStorage storage) : storageRef = storage.ref();
+  // FirebaseStorage 의존성 제거
+  CloudFirebaseRepository();
 
   Future<String> uploadFile(String mainPath, File file) async {
-    var uuid = Uuid();
-    final uploadTask =
-        storageRef.child("products/$mainPath/${uuid.v4()}.jpg").putFile(file);
-    final TaskSnapshot taskSnapshot = await uploadTask;
-    final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-    return downloadUrl;
+    // 실제 업로드 대신 로컬 파일 경로를 리턴하거나
+    // 필요하다면 로컬 앱 디렉토리로 복사하는 로직을 넣을 수 있음.
+    // 여기서는 단순히 파일 경로를 리턴하여 Image.file 등으로 보여줄 수 있게 처리한다고 가정.
+    // 만약 NetworkImage를 쓰고 있다면 로직 수정이 더 필요하지만, 
+    // 보통 FileImage와 섞어 쓰므로 일단 path 리턴.
+    return file.path; 
   }
 }
