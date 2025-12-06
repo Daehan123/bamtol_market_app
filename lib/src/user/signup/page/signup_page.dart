@@ -7,16 +7,15 @@ import 'package:get/get.dart';
 class SignupPage extends GetView<SignupController> {
   const SignupPage({super.key});
 
-  // 주소 검색 바텀시트
   void _showAddressSearchSheet(BuildContext context) {
     controller.searchText.value = '';
-    controller.searchAddress(''); 
-    
+    controller.searchAddress('');
+
     Get.bottomSheet(
       Container(
         height: MediaQuery.of(context).size.height * 0.8,
         decoration: const BoxDecoration(
-          color: Colors.white, // 배경이 흰색임
+          color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -25,22 +24,19 @@ class SignupPage extends GetView<SignupController> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // [수정] 제목 글자색 검은색으로 지정
             const AppFont('내 동네 찾기', fontWeight: FontWeight.bold, size: 18, color: Colors.black),
             const SizedBox(height: 20),
-            
-            // 검색 입력창
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 autofocus: true,
-                style: const TextStyle(color: Colors.black), // [수정] 입력 글자색 검은색
+                style: const TextStyle(color: Colors.black),
                 onChanged: (value) {
                   controller.searchAddress(value);
                 },
                 decoration: InputDecoration(
                   hintText: '동명(읍,면)으로 검색 (예: 역삼동)',
-                  hintStyle: TextStyle(color: Colors.grey[500]), // 힌트 색상
+                  hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   filled: true,
@@ -53,8 +49,6 @@ class SignupPage extends GetView<SignupController> {
               ),
             ),
             const SizedBox(height: 10),
-            
-            // 입력한 주소로 설정 버튼
             GestureDetector(
               onTap: () {
                 if (controller.searchText.value.isNotEmpty) {
@@ -73,24 +67,21 @@ class SignupPage extends GetView<SignupController> {
                 ),
                 child: const AppFont(
                   '입력한 주소로 설정하기',
-                  color: Colors.white, 
-                  align: TextAlign.center, 
+                  color: Colors.white,
+                  align: TextAlign.center,
                   fontWeight: FontWeight.bold
                 ),
               ),
             ),
-            
             const SizedBox(height: 20),
-            const Divider(height: 1, color: Colors.grey), // 구분선 색상 추가
-            
-            // 검색 결과 리스트
+            const Divider(height: 1, color: Colors.grey),
             Expanded(
               child: Obx(() {
                 if (controller.searchAddressResult.isEmpty) {
                    return const Center(
                      child: AppFont(
                        "검색 결과가 없습니다.\n직접 입력 후 위 버튼을 눌러주세요.",
-                       color: Colors.black, // [수정] 검은색
+                       color: Colors.black,
                        align: TextAlign.center,
                      )
                    );
@@ -100,11 +91,10 @@ class SignupPage extends GetView<SignupController> {
                   separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.grey),
                   itemBuilder: (context, index) {
                     return ListTile(
-                      // [수정] 리스트 아이템 글자색을 검은색(Colors.black)으로 지정
                       title: AppFont(
-                        controller.searchAddressResult[index], 
+                        controller.searchAddressResult[index],
                         size: 16,
-                        color: Colors.black, 
+                        color: Colors.black,
                       ),
                       onTap: () {
                         controller.selectAddress(controller.searchAddressResult[index]);
@@ -141,7 +131,6 @@ class SignupPage extends GetView<SignupController> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 10),
-              // 프로필 이미지
               Center(
                 child: Container(
                   width: 100,
@@ -155,8 +144,7 @@ class SignupPage extends GetView<SignupController> {
                 ),
               ),
               const SizedBox(height: 30),
-              
-              // 1. 닉네임 입력
+
               const AppFont('닉네임', fontWeight: FontWeight.bold, size: 16),
               const SizedBox(height: 10),
               Row(
@@ -195,23 +183,27 @@ class SignupPage extends GetView<SignupController> {
                 padding: const EdgeInsets.only(top: 8.0, left: 5.0),
                 child: AppFont(
                   controller.nicknameMessage.value,
-                  color: controller.isNicknameValid.value 
-                      ? Colors.green 
+                  color: controller.isNicknameValid.value
+                      ? Colors.green
                       : Colors.red,
                   size: 13,
                 ),
               )),
-              
+
               const SizedBox(height: 20),
 
-              // 2. 휴대전화 번호
               const AppFont('휴대전화 번호', fontWeight: FontWeight.bold, size: 16),
               const SizedBox(height: 10),
               TextField(
                 controller: controller.phoneController,
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
+                maxLength: 11,
+                onChanged: (value) {
+                  controller.checkPhoneNumber(value);
+                },
                 decoration: InputDecoration(
                   hintText: '휴대전화 번호를 입력해주세요 (- 없이)',
+                  counterText: "",
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -219,10 +211,17 @@ class SignupPage extends GetView<SignupController> {
                   ),
                 ),
               ),
+              Obx(() => Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 5.0),
+                child: AppFont(
+                  controller.phoneMessage.value,
+                  color: Colors.red,
+                  size: 13,
+                ),
+              )),
 
               const SizedBox(height: 20),
 
-              // 3. 내 동네 (주소)
               const AppFont('내 동네', fontWeight: FontWeight.bold, size: 16),
               const SizedBox(height: 10),
               TextField(
@@ -241,15 +240,15 @@ class SignupPage extends GetView<SignupController> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
-              // 회원가입 완료 버튼
+
               Obx(() {
-                bool isActive = controller.isNicknameValid.value;
+                bool isActive = controller.isNicknameValid.value && controller.isPhoneValid.value;
                 return Btn(
                   color: isActive ? const Color(0xffED7738) : Colors.grey,
                   onTap: () {
+                    if (!isActive) return;
                     controller.submit();
                   },
                   child: const AppFont(

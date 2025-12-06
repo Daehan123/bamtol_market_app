@@ -17,11 +17,10 @@ class AuthenticationRepository extends GetxService {
   }
 
   void _fakeLogin(String uid) {
-    // [수정] UserModel 생성 시 필수값(nickname)을 넣어줘야 오류가 안 납니다.
-    // 여기는 "로그인 시늉"만 하는 곳이므로 임시 값을 넣어줍니다.
+
     _user.value = UserModel(
       uid: uid,
-      nickname: 'Guest', // 임시 닉네임
+      nickname: 'Guest',
       temperature: 36.5,
     );
   }

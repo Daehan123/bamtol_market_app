@@ -103,14 +103,13 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                   if (location != null) {
                     myLocation = location!;
                   }
-                  // Stack을 사용하여 지도 위에 UI 요소 배치
                   return Stack(
                     children: [
                       FlutterMap(
                         mapController: _mapController,
                         options: MapOptions(
-                          initialCenter: myLocation, // v7: center -> initialCenter
-                          initialZoom: 15.0, // 줌 레벨 추가 권장
+                          initialCenter: myLocation,
+                          initialZoom: 15.0,
                           onPositionChanged: (position, hasGesture) {
                             if (hasGesture) {
                               setState(() {
@@ -118,7 +117,6 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                               });
                             }
                           },
-                          // v7: interactionOptions 사용 가능 (기본값 사용해도 됨)
                         ),
                         children: [
                           TileLayer(
@@ -127,7 +125,6 @@ class _TradeLocationMapState extends State<TradeLocationMap> {
                           ),
                         ],
                       ),
-                      // 지도 중앙 마커 및 라벨 (nonRotatedChildren 대체)
                       if (lable != '')
                         Center(
                           child: Column(

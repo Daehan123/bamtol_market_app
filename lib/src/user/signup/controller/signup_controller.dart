@@ -15,15 +15,47 @@ class SignupController extends GetxController {
   RxBool isNicknameValid = false.obs;
   RxString nicknameMessage = ''.obs;
 
+  RxBool isPhoneValid = false.obs;
+  RxString phoneMessage = ''.obs;
+
   RxList<String> searchAddressResult = <String>[].obs;
   RxString searchText = ''.obs;
 
   SignupController(this._userRepository, this.uid);
 
+  @override
+  void onInit() {
+    super.onInit();
+    searchAddressResult.assignAll(_koreaTowns);
+
+    nicknameController.addListener(() {
+      if (isNicknameValid.value) {
+        isNicknameValid.value = false;
+        nicknameMessage.value = '닉네임이 변경되었습니다. 다시 중복 확인해주세요.';
+      } else {
+        nicknameMessage.value = '';
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    nicknameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    super.onClose();
+  }
+
   void checkNickname(String nickname) async {
     if(nickname.trim().isEmpty) {
       isNicknameValid.value = false;
       nicknameMessage.value = '닉네임을 입력해주세요.';
+      return;
+    }
+
+    if(nickname.trim().length < 2) {
+      isNicknameValid.value = false;
+      nicknameMessage.value = '닉네임은 2글자 이상이어야 합니다.';
       return;
     }
     
@@ -38,17 +70,32 @@ class SignupController extends GetxController {
     }
   }
 
-  // [수정] 주소 검색 함수
+  void checkPhoneNumber(String value) {
+    String phone = value.trim();
+    if (phone.isEmpty) {
+      isPhoneValid.value = false;
+      phoneMessage.value = '전화번호를 입력해주세요.';
+      return;
+    }
+
+    final phoneRegex = RegExp(r'^01[0-9]-?([0-9]{3,4})-?([0-9]{4})$');
+    if (!phoneRegex.hasMatch(phone)) {
+      isPhoneValid.value = false;
+      phoneMessage.value = '올바른 전화번호 형식이 아닙니다.';
+    } else {
+      isPhoneValid.value = true;
+      phoneMessage.value = '';
+    }
+  }
+
   void searchAddress(String query) {
     searchText.value = query;
 
-    // 검색어가 비어있으면 -> "전체 목록"을 보여줌 (기존에는 비웠음)
     if (query.isEmpty) {
       searchAddressResult.assignAll(_koreaTowns);
       return;
     }
-    
-    // 검색어가 있으면 -> 포함된 동네만 필터링
+
     List<String> result = _koreaTowns.where((town) => town.contains(query)).toList();
     searchAddressResult.assignAll(result);
   }
@@ -56,8 +103,6 @@ class SignupController extends GetxController {
   void selectAddress(String address) {
     if (address.isEmpty) return;
     addressController.text = address;
-    searchAddressResult.clear();
-    searchText.value = '';
     Get.back();
   }
 
@@ -70,10 +115,12 @@ class SignupController extends GetxController {
        Get.snackbar('알림', '닉네임을 입력해주세요.', snackPosition: SnackPosition.BOTTOM);
        return;
     }
-    if (phoneController.text.trim().isEmpty) {
-       Get.snackbar('알림', '전화번호를 입력해주세요.', snackPosition: SnackPosition.BOTTOM);
+
+    if (!isPhoneValid.value) {
+       Get.snackbar('알림', '올바른 전화번호를 입력해주세요.', snackPosition: SnackPosition.BOTTOM);
        return;
     }
+
     if (addressController.text.trim().isEmpty) {
        Get.snackbar('알림', '동네를 선택해주세요.', snackPosition: SnackPosition.BOTTOM);
        return;
@@ -94,7 +141,7 @@ class SignupController extends GetxController {
       Get.find<AuthenticationController>().manualLogin(newUser);
       Get.offAllNamed('/home');
     } else {
-      Get.snackbar('오류', '회원가입 처리에 실패했습니다. 다시 시도해주세요.');
+      Get.snackbar('오류', '회원가입 처리에 실패했습니다. 다시 시도해주세요.', snackPosition: SnackPosition.BOTTOM);
     }
   }
 

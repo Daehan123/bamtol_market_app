@@ -18,15 +18,12 @@ class AuthenticationController extends GetxController {
     super.onInit();
   }
 
-  // [수정] 복잡한 스트림 리스너 제거. 단순 유저 저장용 함수 추가.
   void manualLogin(UserModel newUser) {
     userModel.value = newUser;
   }
 
   Future<void> logout() async {
-    // 저장소 레벨 로그아웃 (필요시)
     await _authenticationRepository.logout();
-    // 상태 비우기 -> 앱이 이를 감지하고 로그인/시작 화면으로 이동
     userModel.value = null;
   }
 }
