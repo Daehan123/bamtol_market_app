@@ -71,13 +71,12 @@ class Product extends Equatable {
       imageUrls: json['imageUrls'] == null
           ? []
           : (json['imageUrls'] as List).map<String>((e) => e as String).toList(),
-      
-      // [수정] Firestore Timestamp(.toDate()) 제거 -> String 파싱으로 변경
+
       createdAt: json['createdAt'] == null
           ? DateTime.now()
           : (json['createdAt'] is String 
               ? DateTime.parse(json['createdAt']) 
-              : DateTime.now()), // 혹시 모를 타입 불일치 대비
+              : DateTime.now()),
               
       updatedAt: json['updatedAt'] == null
           ? DateTime.now()
@@ -86,8 +85,7 @@ class Product extends Equatable {
               : DateTime.now()),
               
       viewCount: json['viewCount']?.toInt() ?? 0,
-      
-      // owner가 null일 경우 대비
+
       owner: json['owner'] == null ? null : UserModel.fromJson(json['owner']),
       
       status: json['status'] == null

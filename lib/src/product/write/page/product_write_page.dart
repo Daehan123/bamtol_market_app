@@ -8,7 +8,7 @@ import 'package:bamtol_market_app/src/common/components/trade_location_map.dart'
 import 'package:bamtol_market_app/src/common/enum/market_enum.dart';
 import 'package:bamtol_market_app/src/common/layout/common_layout.dart';
 import 'package:bamtol_market_app/src/product/write/controller/product_write_controller.dart';
-import 'package:flutter/foundation.dart'; // [중요] 웹/앱 구분을 위해 추가
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -187,7 +187,6 @@ class _PhotoSelectedView extends GetView<ProductWriteController> {
                     child: SizedBox(
                       width: 67,
                       height: 67,
-                      // [수정] 웹과 앱(PC/모바일) 환경을 구분하여 이미지 표시
                       child: kIsWeb
                           ? Image.network(
                               controller.selectedImages[index].path,

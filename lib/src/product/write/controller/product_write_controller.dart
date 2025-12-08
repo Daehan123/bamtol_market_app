@@ -10,7 +10,7 @@ import 'package:bamtol_market_app/src/user/model/user_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart'; // [변경] image_picker 사용
+import 'package:image_picker/image_picker.dart';
 
 class ProductWriteController extends GetxController {
   final UserModel owner;
@@ -19,10 +19,9 @@ class ProductWriteController extends GetxController {
   final CloudFirebaseRepository _cloudFirebaseRepository;
   
   RxBool isPossibleSubmit = false.obs;
-  
-  // [변경] AssetEntity -> XFile로 변경 (파일 자체를 다룸)
+
   RxList<XFile> selectedImages = <XFile>[].obs;
-  final ImagePicker _picker = ImagePicker(); // 이미지 피커 인스턴스
+  final ImagePicker _picker = ImagePicker();
 
   ProductWriteController(
     this.owner,
@@ -50,13 +49,10 @@ class ProductWriteController extends GetxController {
     }
   }
 
-  // [변경] 갤러리에서 사진 가져오기 함수
   Future<void> pickImages() async {
-    // 갤러리에서 여러 장 선택
     final List<XFile> images = await _picker.pickMultiImage();
     
     if (images.isNotEmpty) {
-      // 기존 리스트에 추가 (최대 10장 제한 로직 추가 가능)
       selectedImages.addAll(images);
       
       if(selectedImages.length > 10) {
@@ -113,7 +109,6 @@ class ProductWriteController extends GetxController {
   Future<List<String>> uploadImages(List<XFile> images) async {
     List<String> imageUrls = [];
     for (var image in images) {
-      // [변경] XFile -> File 변환
       var file = File(image.path);
       
       var downloadUrl =
